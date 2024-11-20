@@ -11,7 +11,7 @@ export async function setAuthUserFromSession(
 ) {
   if (session?.user) {
     setAuthUser(session?.user);
-    const profile = await getUserProfile(session.user.id);
+    const profile = await getUserProfile(session.user?.id);
     setAuthUser({ ...session.user, ...profile });
   } else {
     setAuthUser(null);

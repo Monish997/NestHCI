@@ -115,7 +115,7 @@ export async function createEvent(details, user) {
     end_date: endDate,
     start_time: startTime,
     end_time: endTime,
-    organiser: user.id,
+    organiser: user?.id,
     location_name: details.locationName,
     location_url: details.locationUrl,
     thumbnail: details.thumbnail ? fileUploadData?.fullPath : null,

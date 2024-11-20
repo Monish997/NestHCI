@@ -54,7 +54,7 @@ function RootLayout() {
       Toast.show({
         type: "success",
         text1: "Welcome",
-        text2: `Logged in as ${user.username}`,
+        text2: `Logged in as ${user?.username}`,
       });
     }
   }, [user]);

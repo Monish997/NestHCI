@@ -42,7 +42,7 @@ async function signUp({ email, password, name, username }: RegisterPayload) {
 
   const { error: insertError } = await supabase
     .from("users")
-    .upsert({ id: session.user.id, name, username, bio: "" });
+    .upsert({ id: session.user?.id, name, username, bio: "" });
   if (insertError) {
     throw new Error(insertError.message);
   }

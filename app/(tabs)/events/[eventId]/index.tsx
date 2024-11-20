@@ -79,7 +79,7 @@ export default function Event() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchData(eventId, user.id, setLoading, setEvent, setIsGoing, setIsInterested);
+      fetchData(eventId, user?.id, setLoading, setEvent, setIsGoing, setIsInterested);
     }, [])
   );
 
@@ -103,7 +103,7 @@ export default function Event() {
       <Header
         text=""
         rightComponent={
-          event?.organiser.id === user.id ? (
+          event?.organiser.id === user?.id ? (
             <FontAwesome
               name="pencil-square-o"
               size={24}
@@ -157,7 +157,7 @@ export default function Event() {
             <GradientButton
               text={isGoing ? "Unregister" : "Register"}
               onPress={() => {
-                (isGoing ? removeGoing(event.id, user.id) : addGoing(event.id, user.id))
+                (isGoing ? removeGoing(event.id, user?.id) : addGoing(event.id, user?.id))
                   .then(() => {
                     setIsGoing(!isGoing);
                     Toast.show({
@@ -184,7 +184,10 @@ export default function Event() {
               size={30}
               color={foregroundColor}
               onPress={() => {
-                (isInterested ? removeInterest(event.id, user.id) : addInterest(event.id, user.id))
+                (isInterested
+                  ? removeInterest(event.id, user?.id)
+                  : addInterest(event.id, user?.id)
+                )
                   .then(() => {
                     setIsInterested(!isInterested);
                     Toast.show({

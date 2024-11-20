@@ -29,7 +29,7 @@ export default function Calendar() {
 
   useFocusEffect(
     useCallback(() => {
-      getEventsForUser(user.id)
+      getEventsForUser(user?.id)
         .then((events) => {
           setEvents(events);
         })
