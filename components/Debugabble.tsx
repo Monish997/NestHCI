@@ -4,6 +4,8 @@ import { Text as RNText, View as RNView } from "react-native";
 // Create a context to keep track of the depth
 const DepthContext = createContext(0);
 
+const DEBUG = false;
+
 const colors = [
   "red",
   "blue",
@@ -24,7 +26,7 @@ const getBorderColor = (depth: number) => {
 // Create a custom Text component
 const Text: React.FC<React.ComponentProps<typeof RNText>> = (props) => {
   const depth = useContext(DepthContext);
-  const style = __DEV__ ? { borderColor: getBorderColor(depth), borderWidth: 1 } : {};
+  const style = DEBUG ? { borderColor: getBorderColor(depth), borderWidth: 1 } : {};
 
   return (
     <DepthContext.Provider value={depth + 1}>
@@ -36,7 +38,7 @@ const Text: React.FC<React.ComponentProps<typeof RNText>> = (props) => {
 // Create a custom View component
 const View: React.FC<React.ComponentProps<typeof RNView>> = (props) => {
   const depth = useContext(DepthContext);
-  const style = __DEV__ ? { borderColor: getBorderColor(depth), borderWidth: 1 } : {};
+  const style = DEBUG ? { borderColor: getBorderColor(depth), borderWidth: 1 } : {};
 
   return (
     <DepthContext.Provider value={depth + 1}>

@@ -21,6 +21,7 @@ export function ThemedText({
   return (
     <Text
       style={[
+        { fontFamily: "MavenPro" },
         { color },
         type === "default" ? styles.default : undefined,
         type === "title" ? styles.title : undefined,
@@ -37,7 +38,7 @@ export function ThemedText({
 
 const styles = StyleSheet.create({
   default: {
-    fontFamily: "MavenPro",
+    fontWeight: "normal",
     fontSize: 16,
   },
   muted: {
@@ -49,7 +50,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: "semibold",
+    fontWeight: "bold",
   },
   subtitle: {
     fontSize: 14,

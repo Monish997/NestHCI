@@ -1,102 +1,200 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform } from 'react-native';
+import { getEventsByUser } from "@/api/events";
+import { updateUser } from "@/api/users";
+import { GradientButton } from "@/components/buttons/GradientButton";
+import { EventCardMini } from "@/components/cards/EventCardMini";
+import { Header } from "@/components/Header";
+import { ImagePickerComponent as ImagePicker } from "@/components/inputs/ImagePicker";
+import { Input } from "@/components/inputs/Input";
+import { Loading } from "@/components/Loading";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { SUPABASE_URL } from "@/constants";
+import { useAuth } from "@/contexts/AuthContext";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { supabase } from "@/services/supabase";
+import { uploadFileToStorage } from "@/utils";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useFormik } from "formik";
+import { useCallback, useState } from "react";
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
+import Toast from "react-native-toast-message";
+import { getTsid } from "tsid-ts";
+import * as Yup from "yup";
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const BioSchema = Yup.object().shape({
+  description: Yup.string().max(200, "Bio must be less than 200 characters"),
+});
 
-export default function TabTwoScreen() {
+function ImagePickerPlaceholder() {
+  const foregroundColor = useThemeColor({}, "text");
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText> library
-          to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <ThemedView
+      style={{
+        height: 100,
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 15,
+      }}
+    >
+      <Ionicons name="image-outline" size={40} color={foregroundColor} />
+      <ThemedText>Select new profile picture</ThemedText>
+    </ThemedView>
+  );
+}
+
+export default function Me() {
+  const router = useRouter();
+  const { user, setAuthUser } = useAuth();
+
+  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      getEventsByUser(user?.id)
+        .then((events) => {
+          setEvents(events);
+        })
+        .catch((error) => {
+          Toast.show({ type: "error", text1: "Error", text2: error.message });
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }, [])
+  );
+
+  const formik = useFormik({
+    initialValues: {
+      bio: user?.bio || "",
+      profile_pic: null,
+    },
+    validationSchema: BioSchema,
+    onSubmit: async (values) => {
+      try {
+        const update = { bio: values.bio, profile_pic: user?.profile_pic };
+        if (values.profile_pic) {
+          const newFileName = getTsid().toString();
+          const fileUploadData = await uploadFileToStorage(
+            values.profile_pic,
+            "profile_pic",
+            newFileName,
+            "image/*"
+          );
+          update.profile_pic = fileUploadData.fullPath;
+        }
+        updateUser(user?.id, update);
+        setAuthUser({ ...user, ...update });
+        Toast.show({ type: "success", text1: "Success", text2: "Bio updated" });
+        setEditMode(false);
+      } catch (error) {
+        Toast.show({ type: "error", text1: "Error", text2: error.message });
+      }
+    },
+  });
+  const [editMode, setEditMode] = useState(false);
+  const foregroundColor = useThemeColor({}, "text");
+
+  if (loading) {
+    return <Loading text="Loading profile..." />;
+  }
+
+  return (
+    <ThemedView style={{ flex: 1, justifyContent: "flex-start", gap: 15 }}>
+      <Header
+        text="Profile"
+        rightComponent={
+          <TouchableOpacity
+            style={{ height: "100%", alignItems: "center", flexDirection: "row", gap: 10 }}
+            onPress={() => supabase.auth.signOut()}
+          >
+            <ThemedText>Logout</ThemedText>
+            <Ionicons name="log-out-outline" size={24} color={foregroundColor} />
+          </TouchableOpacity>
+        }
+      />
+      <ScrollView style={{ paddingHorizontal: 10, flex: 1 }}>
+        <ThemedView style={{ flex: 1, justifyContent: "flex-start", gap: 15 }}>
+          <ThemedView style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+            <Image
+              source={
+                user?.profile_pic
+                  ? { uri: `${SUPABASE_URL}/storage/v1/object/public/${user?.profile_pic}` }
+                  : require("../../assets/images/default-avatar.png")
+              }
+              style={{ width: 100, height: 100, borderRadius: 50 }}
+            />
+            <ThemedView style={{ flex: 1 }}>
+              <ThemedText type="title">{user?.name}</ThemedText>
+              <ThemedText>@{user?.username}</ThemedText>
+            </ThemedView>
+          </ThemedView>
+          {editMode ? (
+            <ImagePicker
+              placeholder={<ImagePickerPlaceholder />}
+              onChange={(image) => {
+                formik.setFieldValue("profile_pic", image?.uri);
+              }}
+            />
+          ) : null}
+          <ThemedText type="title">Bio</ThemedText>
+          {editMode ? (
+            <ThemedView>
+              <Input
+                placeholder="Bio"
+                onChange={formik.handleChange("bio")}
+                value={formik.values.bio}
+                multiline={true}
+                style={{ height: 200 }}
+              />
+              {formik.errors.bio && formik.touched.bio ? (
+                <Text style={{ color: "red" }}>{formik.errors.bio}</Text>
+              ) : null}
+            </ThemedView>
+          ) : (
+            <ThemedText>{user?.bio || "This space looks empty—how about a bio?"}</ThemedText>
+          )}
+          <GradientButton
+            text={editMode ? "Save" : "Edit Profile"}
+            onPress={() => {
+              if (editMode) {
+                formik.handleSubmit();
+              } else {
+                setEditMode(true);
+              }
+            }}
+            style={styles.editButton}
+          />
+          <ThemedText type="title">Events</ThemedText>
+
+          {events.length > 0 ? (
+            events.map((event) => <EventCardMini key={event.id} event={event} />)
+          ) : (
+            <ThemedText>No events found</ThemedText>
+          )}
+        </ThemedView>
+      </ScrollView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  button: {
+    height: 50,
+    borderRadius: 25,
+    marginVertical: 8,
+    paddingHorizontal: 25,
   },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  editButton: {
+    height: 30,
+    borderRadius: 15,
+    marginVertical: 6,
+    paddingHorizontal: 25,
+  },
+  buttonText: {
+    fontSize: 18,
   },
 });
