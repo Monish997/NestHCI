@@ -1,6 +1,10 @@
-# Welcome to your Expo app 👋
+# Welcome to Nest 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The Event Management Platform aims to streamline event creation, attendance, and venue logistics, catering to both event organizers and attendees. Key features include event creation, invitation and registration processes, and venue management automation.
+
+## Demo
+
+Watch the demo video [here](https://drive.google.com/file/d/1JzdznTC-hI2vRyuEmB3ZlYnym9yk0Sdi/view?usp=sharing)
 
 ## Get started
 
